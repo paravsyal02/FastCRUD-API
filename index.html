@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI CRUD Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .user-list {
+            margin-top: 20px;
+        }
+        .user-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>FastAPI CRUD Application</h1>
+
+    <!-- Create User Form -->
+    <h3>Create User</h3>
+    <form id="create-user-form">
+        <input type="text" id="create-name" placeholder="Name" required>
+        <input type="email" id="create-email" placeholder="Email" required>
+        <input type="number" id="create-age" placeholder="Age" required>
+        <button type="submit">Create User</button>
+    </form>
+    <div id="create-error" class="error"></div>
+
+    <!-- Update User Form -->
+    <h3>Update User</h3>
+    <form id="update-user-form">
+        <input type="number" id="update-id" placeholder="User ID" required>
+        <input type="text" id="update-name" placeholder="New Name">
+        <input type="email" id="update-email" placeholder="New Email">
+        <input type="number" id="update-age" placeholder="New Age">
+        <button type="submit">Update User</button>
+    </form>
+    <div id="update-error" class="error"></div>
+
+    <!-- Delete User Form -->
+    <h3>Delete User</h3>
+    <form id="delete-user-form">
+        <input type="number" id="delete-id" placeholder="User ID" required>
+        <button type="submit">Delete User</button>
+    </form>
+    <div id="delete-error" class="error"></div>
+
+    <!-- Fetch All Users -->
+    <h3>User List</h3>
+    <button id="fetch-users">Fetch All Users</button>
+    <div id="user-list" class="user-list"></div>
+
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:8000";
+
+        // Function to handle errors
+        function handleError(errorElement, message) {
+            errorElement.innerText = message;
+            setTimeout(() => (errorElement.innerText = ""), 3000);
+        }
+
+        // Create User
+        document.getElementById("create-user-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.getElementById("create-name").value;
+            const email = document.getElementById("create-email").value;
+            const age = document.getElementById("create-age").value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, age: parseInt(age) }),
+                });
+
+                if (!response.ok) throw new Error("Failed to create user.");
+                alert("User created successfully!");
+                e.target.reset();
+                fetchUsers();
+            } catch (error) {
+                handleError(document.getElementById("create-error"), error.message);
+            }
+        });
+
+        // Update User
+        document.getElementById("update-user-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const id = document.getElementById("update-id").value;
+            const name = document.getElementById("update-name").value;
+            const email = document.getElementById("update-email").value;
+            const age = document.getElementById("update-age").value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, age: age ? parseInt(age) : undefined }),
+                });
+
+                if (!response.ok) throw new Error("Failed to update user.");
+                alert("User updated successfully!");
+                e.target.reset();
+                fetchUsers();
+            } catch (error) {
+                handleError(document.getElementById("update-error"), error.message);
+            }
+        });
+
+        // Delete User
+        document.getElementById("delete-user-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const id = document.getElementById("delete-id").value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+                    method: "DELETE",
+                });
+
+                if (!response.ok) throw new Error("Failed to delete user.");
+                alert("User deleted successfully!");
+                e.target.reset();
+                fetchUsers();
+            } catch (error) {
+                handleError(document.getElementById("delete-error"), error.message);
+            }
+        });
+
+        // Fetch All Users
+        async function fetchUsers() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users`);
+                const users = await response.json();
+
+                const userList = document.getElementById("user-list");
+                userList.innerHTML = "";
+
+                users.forEach(user => {
+                    userList.innerHTML += `
+                        <div class="user-card">
+                            <p><strong>ID:</strong> ${user.id}</p>
+                            <p><strong>Name:</strong> ${user.name}</p>
+                            <p><strong>Email:</strong> ${user.email}</p>
+                            <p><strong>Age:</strong> ${user.age}</p>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                alert("Failed to fetch users.");
+            }
+        }
+
+        // Attach Fetch Users event
+        document.getElementById("fetch-users").addEventListener("click", fetchUsers);
+    </script>
+</body>
+</html>
